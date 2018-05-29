@@ -1,1 +1,5 @@
 # GLSL_Practice
+
+GLSLの練習をしようかなと。
+
+主にVertexShaderとFragmentShaderを編集・実行できるようにして、個人的な課題が出来たらシェーダーを追加するみたいな感じでやっていこうかなと。
