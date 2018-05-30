@@ -9,21 +9,24 @@ interface OPTION
 class App
 {
 	private screen: HTMLCanvasElement;
-	private vs: HTMLTextAreaElement;
-	private fs: HTMLTextAreaElement;
+	private log: LogArea;
+	private vs: CodeEditor;
+	private fs: CodeEditor;
 	private gl: WebGLRenderingContext;
 	private option: OPTION;
 
 	constructor( config:
 	{
 		screen: HTMLCanvasElement,
+		log: LogArea,
 		preset: HTMLSelectElement,
-		vs: HTMLTextAreaElement,
-		fs: HTMLTextAreaElement,
+		vs: CodeEditor,
+		fs: CodeEditor,
 		option: OPTION,
 	} )
 	{
 		this.screen = config.screen;
+		this.log = config.log;
 		this.option = config.option;
 		this.vs = config.vs;
 		this.fs = config.fs;
@@ -82,7 +85,7 @@ class App
 
 		if ( !this.gl.getShaderParameter( shader, this.gl.COMPILE_STATUS ) )
 		{
-			alert( this.gl.getShaderInfoLog( shader ) );
+			this.log.add( this.gl.getShaderInfoLog( shader ) || '' );
 		}
 
 		return shader;
@@ -114,7 +117,7 @@ class App
 			this.gl.useProgram( program );
 		} else
 		{
-			alert( this.gl.getProgramInfoLog( program ) );
+			this.log.add( this.gl.getProgramInfoLog( program ) || '' );
 		}
 
 		return program;
@@ -122,6 +125,8 @@ class App
 
 	public setShader()
 	{
+		this.log.clear();
+
 		this.screen.width = parseInt( this.option.width.value );
 		this.screen.height = parseInt( this.option.height.value );
 		this.gl.viewport( 0, 0, this.gl.canvas.width, this.gl.canvas.height );

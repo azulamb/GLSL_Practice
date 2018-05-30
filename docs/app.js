@@ -1,6 +1,7 @@
 class App {
     constructor(config) {
         this.screen = config.screen;
+        this.log = config.log;
         this.option = config.option;
         this.vs = config.vs;
         this.fs = config.fs;
@@ -41,7 +42,7 @@ class App {
         this.gl.shaderSource(shader, code);
         this.gl.compileShader(shader);
         if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
-            alert(this.gl.getShaderInfoLog(shader));
+            this.log.add(this.gl.getShaderInfoLog(shader) || '');
         }
         return shader;
     }
@@ -63,11 +64,12 @@ class App {
             this.gl.useProgram(program);
         }
         else {
-            alert(this.gl.getProgramInfoLog(program));
+            this.log.add(this.gl.getProgramInfoLog(program) || '');
         }
         return program;
     }
     setShader() {
+        this.log.clear();
         this.screen.width = parseInt(this.option.width.value);
         this.screen.height = parseInt(this.option.height.value);
         this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
@@ -111,9 +113,71 @@ class App {
         this.gl.flush();
     }
 }
+class CodeEditor extends HTMLElement {
+    static init(tagname = 'code-editor') {
+        customElements.define(tagname, CodeEditor);
+    }
+    constructor() {
+        super();
+        this.contents = this.attachShadow({ mode: 'open' });
+        const style = document.createElement('style');
+        style.textContent = 'textarea{display:block;width:100%;height:100%;box-sizing:border-box;}';
+        this.textarea = document.createElement('textarea');
+        this.contents.appendChild(style);
+        this.contents.appendChild(this.textarea);
+    }
+    get value() { return this.textarea.value; }
+    set value(value) { this.textarea.value = value; }
+}
+class LogArea extends HTMLElement {
+    static init(tagname = 'log-area') {
+        customElements.define(tagname, LogArea);
+    }
+    constructor() {
+        super();
+        this.contents = this.attachShadow({ mode: 'open' });
+        const style = document.createElement('style');
+        style.textContent = 'textarea{display:block;width:100%;height:100%;box-sizing:border-box;}';
+        this.textarea = document.createElement('textarea');
+        this.contents.appendChild(style);
+        this.contents.appendChild(this.textarea);
+        if (this.hasAttribute('max')) {
+            const max = parseInt(this.getAttribute('max') || '');
+            if (Number.isNaN(max) || max <= 0) {
+                this.setAttribute('max', '10');
+            }
+        }
+        else {
+            this.setAttribute('max', '10');
+        }
+    }
+    get max() { return parseInt(this.getAttribute('max') || '10'); }
+    set max(value) {
+        if (Number.isNaN(value) || value <= 0) {
+            return;
+        }
+        this.setAttribute('max', value + '');
+    }
+    get line() { return this.textarea.value.split('\n').length; }
+    clear() { this.textarea.value = ''; }
+    add(...logs) {
+        if (this.line + logs.length <= this.max) {
+            this.textarea.value += logs.join('\n');
+            return;
+        }
+        const newlogs = this.textarea.value.split('\n').concat(logs);
+        while (this.max < newlogs.length) {
+            newlogs.shift();
+        }
+        this.textarea.value = newlogs.join('\n');
+    }
+}
 function Init() {
+    CodeEditor.init();
+    LogArea.init();
     const app = new App({
         screen: document.getElementById('screen'),
+        log: document.getElementById('log'),
         preset: document.getElementById('preset'),
         vs: document.getElementById('vs'),
         fs: document.getElementById('fs'),

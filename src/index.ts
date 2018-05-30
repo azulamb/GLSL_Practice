@@ -1,13 +1,19 @@
 /// <reference path="./App.ts" />
+/// <reference path="./CodeEditor.ts" />
+/// <reference path="./LogArea.ts" />
 
 function Init()
 {
+	CodeEditor.init();
+	LogArea.init();
+
 	const app = new App(
 	{
 		screen: <HTMLCanvasElement>document.getElementById( 'screen' ),
+		log: <LogArea>document.getElementById( 'log' ),
 		preset: <HTMLSelectElement>document.getElementById( 'preset' ),
-		vs: <HTMLTextAreaElement>document.getElementById( 'vs' ),
-		fs: <HTMLTextAreaElement>document.getElementById( 'fs' ),
+		vs: <CodeEditor>document.getElementById( 'vs' ),
+		fs: <CodeEditor>document.getElementById( 'fs' ),
 		option:
 		{
 			width: <HTMLInputElement>document.getElementById( 'width' ),
