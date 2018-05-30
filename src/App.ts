@@ -12,17 +12,12 @@ class App
 		preset: HTMLSelectElement,
 		vs: HTMLTextAreaElement,
 		fs: HTMLTextAreaElement,
-		run: HTMLButtonElement,
-		option: HTMLButtonElement,
 	} )
 	{
 		this.vs = config.vs;
 		this.fs = config.fs;
 		this.initSelect( config.preset );
 		this.initWebGL( config.screen );
-
-		config.run.addEventListener( 'click', () => { this.setShader(); this.draw(); }, false );
-		config.option.addEventListener( 'click', () => { document.body.classList.toggle( 'open' ); }, false );
 	}
 
 	private initSelect( select: HTMLSelectElement )
@@ -114,7 +109,7 @@ class App
 		return program;
 	}
 
-	private setShader()
+	public setShader()
 	{
 		const vs = this.createVertexShader( this.vs.value );
 		const fs = this.createFragmentShader( this.fs.value );

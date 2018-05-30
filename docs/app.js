@@ -4,8 +4,6 @@ class App {
         this.fs = config.fs;
         this.initSelect(config.preset);
         this.initWebGL(config.screen);
-        config.run.addEventListener('click', () => { this.setShader(); this.draw(); }, false);
-        config.option.addEventListener('click', () => { document.body.classList.toggle('open'); }, false);
     }
     initSelect(select) {
         const option = document.createElement('option');
@@ -114,8 +112,18 @@ function Init() {
         preset: document.getElementById('preset'),
         vs: document.getElementById('vs'),
         fs: document.getElementById('fs'),
-        run: document.getElementById('run'),
-        option: document.getElementById('option'),
     });
+    document.getElementById('run').addEventListener('click', () => {
+        if (document.body.classList.contains('running')) {
+        }
+        else {
+            app.setShader();
+            app.draw();
+        }
+        document.body.classList.toggle('running');
+    }, false);
+    document.getElementById('option').addEventListener('click', () => {
+        document.body.classList.toggle('open');
+    }, false);
 }
 window.addEventListener('DOMContentLoaded', Init);

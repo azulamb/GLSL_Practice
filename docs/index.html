@@ -9,15 +9,18 @@ html,body{margin:0;padding:0;height:100%;}
 section{display:block;width:50%;height:100%;position:absolute;top:0;overflow:hidden;}
 section.left{left:0;}
 section.right{right:0;padding-top:2rem;}
-.menu{position:absolute;top:0;left:0;height:2rem;width:100%;overflow:hidden;}
+.menu{position:absolute;top:0;left:0;height:2rem;width:100%;overflow:hidden;padding-right:2rem;}
 #preset{height:2rem;}
 textarea{display:block;width:100%;height:50%;}
-button{height:2rem;}
+button{height:2rem;display:inline-block;width:2rem;height:2rem;}
 button:before{display:inline-block;}
 #run:before{content:'▶';}
+#option{position:absolute;top:0;right:0;}
 #option:before{content:'▼';}
 .option{display:block;height:0;width:100%;transition:height 0.5s;}
 .open .option{height:100%;overflow:auto;}
+
+.running #run:before{content:'■';}
 .open #option:before{content:'▲';}
 </style>
 <script type="text/javascript">
