@@ -126,6 +126,15 @@ class CodeEditor extends HTMLElement {
         const style = document.createElement('style');
         style.textContent = 'textarea{display:block;width:100%;height:100%;box-sizing:border-box;}';
         this.textarea = document.createElement('textarea');
+        this.textarea.addEventListener('keydown', (event) => {
+            if (event.keyCode === 9) {
+                event.preventDefault();
+                const val = this.textarea.value;
+                const pos = this.textarea.selectionStart;
+                this.textarea.value = val.substr(0, pos) + '\t' + val.substr(pos, val.length);
+                this.textarea.setSelectionRange(pos + 1, pos + 1);
+            }
+        }, false);
         this.contents.appendChild(style);
         this.contents.appendChild(this.textarea);
     }
