@@ -13,6 +13,7 @@ class App
 		vs: HTMLTextAreaElement,
 		fs: HTMLTextAreaElement,
 		run: HTMLButtonElement,
+		option: HTMLButtonElement,
 	} )
 	{
 		this.vs = config.vs;
@@ -21,6 +22,7 @@ class App
 		this.initWebGL( config.screen );
 
 		config.run.addEventListener( 'click', () => { this.setShader(); this.draw(); }, false );
+		config.option.addEventListener( 'click', () => { document.body.classList.toggle( 'open' ); }, false );
 	}
 
 	private initSelect( select: HTMLSelectElement )

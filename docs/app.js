@@ -5,6 +5,7 @@ class App {
         this.initSelect(config.preset);
         this.initWebGL(config.screen);
         config.run.addEventListener('click', () => { this.setShader(); this.draw(); }, false);
+        config.option.addEventListener('click', () => { document.body.classList.toggle('open'); }, false);
     }
     initSelect(select) {
         const option = document.createElement('option');
@@ -114,6 +115,7 @@ function Init() {
         vs: document.getElementById('vs'),
         fs: document.getElementById('fs'),
         run: document.getElementById('run'),
+        option: document.getElementById('option'),
     });
 }
 window.addEventListener('DOMContentLoaded', Init);

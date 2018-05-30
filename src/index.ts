@@ -9,6 +9,7 @@ function Init()
 		vs: <HTMLTextAreaElement>document.getElementById( 'vs' ),
 		fs: <HTMLTextAreaElement>document.getElementById( 'fs' ),
 		run: <HTMLButtonElement>document.getElementById( 'run' ),
+		option: <HTMLButtonElement>document.getElementById( 'option' ),
 	} );
 }
 
