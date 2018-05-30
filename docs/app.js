@@ -1,5 +1,7 @@
 class App {
     constructor(config) {
+        this.screen = config.screen;
+        this.option = config.option;
         this.vs = config.vs;
         this.fs = config.fs;
         this.initSelect(config.preset);
@@ -66,6 +68,9 @@ class App {
         return program;
     }
     setShader() {
+        this.screen.width = parseInt(this.option.width.value);
+        this.screen.height = parseInt(this.option.height.value);
+        this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
         const vs = this.createVertexShader(this.vs.value);
         const fs = this.createFragmentShader(this.fs.value);
         const program = this.createProgram(vs, fs);
@@ -112,6 +117,10 @@ function Init() {
         preset: document.getElementById('preset'),
         vs: document.getElementById('vs'),
         fs: document.getElementById('fs'),
+        option: {
+            width: document.getElementById('width'),
+            height: document.getElementById('height'),
+        },
     });
     document.getElementById('run').addEventListener('click', () => {
         if (document.body.classList.contains('running')) {

@@ -1,10 +1,18 @@
 declare const LIST: string[];
 
+interface OPTION
+{
+	width: HTMLInputElement;
+	height: HTMLInputElement;
+}
+
 class App
 {
+	private screen: HTMLCanvasElement;
 	private vs: HTMLTextAreaElement;
 	private fs: HTMLTextAreaElement;
 	private gl: WebGLRenderingContext;
+	private option: OPTION;
 
 	constructor( config:
 	{
@@ -12,8 +20,11 @@ class App
 		preset: HTMLSelectElement,
 		vs: HTMLTextAreaElement,
 		fs: HTMLTextAreaElement,
+		option: OPTION,
 	} )
 	{
+		this.screen = config.screen;
+		this.option = config.option;
 		this.vs = config.vs;
 		this.fs = config.fs;
 		this.initSelect( config.preset );
@@ -111,6 +122,10 @@ class App
 
 	public setShader()
 	{
+		this.screen.width = parseInt( this.option.width.value );
+		this.screen.height = parseInt( this.option.height.value );
+		this.gl.viewport( 0, 0, this.gl.canvas.width, this.gl.canvas.height );
+
 		const vs = this.createVertexShader( this.vs.value );
 		const fs = this.createFragmentShader( this.fs.value );
 		const program = this.createProgram( vs, fs );

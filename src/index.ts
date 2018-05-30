@@ -8,6 +8,11 @@ function Init()
 		preset: <HTMLSelectElement>document.getElementById( 'preset' ),
 		vs: <HTMLTextAreaElement>document.getElementById( 'vs' ),
 		fs: <HTMLTextAreaElement>document.getElementById( 'fs' ),
+		option:
+		{
+			width: <HTMLInputElement>document.getElementById( 'width' ),
+			height: <HTMLInputElement>document.getElementById( 'height' ),
+		},
 	} );
 
 	( <HTMLButtonElement>document.getElementById( 'run' ) ).addEventListener( 'click', () =>
