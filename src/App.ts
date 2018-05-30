@@ -15,6 +15,8 @@ class App
 	private gl: WebGLRenderingContext;
 	private option: OPTION;
 
+	private uniLocation: WebGLUniformLocation[];
+
 	constructor( config:
 	{
 		screen: HTMLCanvasElement,
@@ -137,8 +139,6 @@ class App
 
 		const attLocation: number[] = [];
 		attLocation.push( this.gl.getAttribLocation( program, 'position' ) );
-		//attLocation.push( this.gl.getAttribLocation( program, 'color' ) );
-		//attLocation.push( this.gl.getAttribLocation( program, 'textureCoord' ) );
 
 		const attStride = [ 3, 4, 2 ]; // pos, col, uv
 
@@ -154,6 +154,9 @@ class App
 
 		// Index
 		this.gl.bindBuffer( this.gl.ELEMENT_ARRAY_BUFFER, this.createIbo( new Int16Array( index ) ) );
+
+		this.uniLocation = [];
+		this.uniLocation.push( <WebGLUniformLocation>this.gl.getUniformLocation( program, 'frame' ) );
 
 		this.gl.enable( this.gl.DEPTH_TEST );
 		this.gl.depthFunc( this.gl.LEQUAL );
@@ -186,8 +189,11 @@ class App
 		return ibo;
 	}
 
-	public draw()
+	public draw( frame: number )
 	{
+
+		this.gl.uniform1f( this.uniLocation[ 0 ], frame );
+
 		this.gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
 		this.gl.clearDepth( 1.0 );
 		this.gl.clear( this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT );

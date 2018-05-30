@@ -86,6 +86,8 @@ class App {
         this.gl.enableVertexAttribArray(attLocation[0]);
         this.gl.vertexAttribPointer(attLocation[0], attStride[0], this.gl.FLOAT, false, 0, 0);
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.createIbo(new Int16Array(index)));
+        this.uniLocation = [];
+        this.uniLocation.push(this.gl.getUniformLocation(program, 'frame'));
         this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.depthFunc(this.gl.LEQUAL);
         this.gl.enable(this.gl.BLEND);
@@ -105,7 +107,8 @@ class App {
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, null);
         return ibo;
     }
-    draw() {
+    draw(frame) {
+        this.gl.uniform1f(this.uniLocation[0], frame);
         this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
         this.gl.clearDepth(1.0);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
@@ -175,6 +178,19 @@ class LogArea extends HTMLElement {
 function Init() {
     CodeEditor.init();
     LogArea.init();
+    let frame = 0;
+    const render = () => {
+        if (!document.body.classList.contains('running')) {
+            return;
+        }
+        requestAnimationFrame(render);
+        app.draw(frame++);
+    };
+    const start = () => {
+        frame = 0;
+        app.setShader();
+        render();
+    };
     const app = new App({
         screen: document.getElementById('screen'),
         log: document.getElementById('log'),
@@ -187,13 +203,10 @@ function Init() {
         },
     });
     document.getElementById('run').addEventListener('click', () => {
-        if (document.body.classList.contains('running')) {
-        }
-        else {
-            app.setShader();
-            app.draw();
-        }
         document.body.classList.toggle('running');
+        if (document.body.classList.contains('running')) {
+            start();
+        }
     }, false);
     document.getElementById('option').addEventListener('click', () => {
         document.body.classList.toggle('open');
