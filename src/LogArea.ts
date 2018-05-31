@@ -18,7 +18,7 @@ class LogArea extends HTMLElement
 		style.textContent = 'textarea{display:block;width:100%;height:100%;box-sizing:border-box;}';
 
 		this.textarea = document.createElement( 'textarea' );
-		//contentEditable
+		this.textarea.readOnly = true;
 
 		this.contents.appendChild( style );
 		this.contents.appendChild( this.textarea );
@@ -36,6 +36,7 @@ class LogArea extends HTMLElement
 	public get max() { return parseInt( this.getAttribute( 'max' ) || '10' ); }
 	public set max( value )
 	{
+		if ( !value ) { this.setAttribute( 'max', '' ); return; }
 		if ( Number.isNaN( value ) || value <= 0 ) { return; }
 		this.setAttribute( 'max', value + '' );
 	}
@@ -46,7 +47,7 @@ class LogArea extends HTMLElement
 
 	public add( ... logs: string[] )
 	{
-		if ( this.line + logs.length <= this.max )
+		if ( this.hasAttribute( 'max' ) && this.line + logs.length <= this.max )
 		{
 			this.textarea.value += logs.join( '\n' );
 			return;

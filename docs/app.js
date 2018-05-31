@@ -28,6 +28,23 @@ class App {
         }, false);
     }
     initWebGL(canvas) {
+        canvas.addEventListener('mousemove', (event) => {
+            const target_rect = event.currentTarget.getBoundingClientRect();
+            this.mx = (event.clientX - target_rect.left) / canvas.width;
+            this.my = (event.clientY - target_rect.top) / canvas.height;
+            if (this.mx < 0) {
+                this.mx = 0;
+            }
+            if (1 < this.mx) {
+                this.mx = 1;
+            }
+            if (this.my < 0) {
+                this.my = 0;
+            }
+            if (1 < this.my) {
+                this.my = 1;
+            }
+        }, false);
         this.gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
     }
     getShader(name) {
@@ -70,6 +87,8 @@ class App {
     }
     setShader() {
         this.log.clear();
+        this.mx = 0.5;
+        this.my = 0.5;
         this.screen.width = parseInt(this.option.width.value);
         this.screen.height = parseInt(this.option.height.value);
         this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
@@ -88,6 +107,7 @@ class App {
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.createIbo(new Int16Array(index)));
         this.uniLocation = [];
         this.uniLocation.push(this.gl.getUniformLocation(program, 'frame'));
+        this.uniLocation.push(this.gl.getUniformLocation(program, 'mouse'));
         this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.depthFunc(this.gl.LEQUAL);
         this.gl.enable(this.gl.BLEND);
@@ -109,6 +129,7 @@ class App {
     }
     draw(frame) {
         this.gl.uniform1f(this.uniLocation[0], frame);
+        this.gl.uniform2fv(this.uniLocation[1], [this.mx, this.my]);
         this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
         this.gl.clearDepth(1.0);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
@@ -151,6 +172,7 @@ class LogArea extends HTMLElement {
         const style = document.createElement('style');
         style.textContent = 'textarea{display:block;width:100%;height:100%;box-sizing:border-box;}';
         this.textarea = document.createElement('textarea');
+        this.textarea.readOnly = true;
         this.contents.appendChild(style);
         this.contents.appendChild(this.textarea);
         if (this.hasAttribute('max')) {
@@ -165,6 +187,10 @@ class LogArea extends HTMLElement {
     }
     get max() { return parseInt(this.getAttribute('max') || '10'); }
     set max(value) {
+        if (!value) {
+            this.setAttribute('max', '');
+            return;
+        }
         if (Number.isNaN(value) || value <= 0) {
             return;
         }
@@ -173,7 +199,7 @@ class LogArea extends HTMLElement {
     get line() { return this.textarea.value.split('\n').length; }
     clear() { this.textarea.value = ''; }
     add(...logs) {
-        if (this.line + logs.length <= this.max) {
+        if (this.hasAttribute('max') && this.line + logs.length <= this.max) {
             this.textarea.value += logs.join('\n');
             return;
         }

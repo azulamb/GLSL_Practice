@@ -56,8 +56,10 @@ void main(void) {
 }</script>
 <script id="default_fs" type="x-shader/x-fragment">precision mediump float;
 uniform float frame;
+uniform vec2  mouse;
+
 void main(void) {
-	gl_FragColor = vec4(0.0, 0.0, sin( frame * 0.01 ), 0.5);
+	gl_FragColor = vec4( mouse.x, mouse.y, sin( frame * 0.01 ), 0.5 );
 }</script>
 </body>
 </html>

@@ -16,6 +16,8 @@ class App
 	private option: OPTION;
 
 	private uniLocation: WebGLUniformLocation[];
+	private mx: number;
+	private my: number;
 
 	constructor( config:
 	{
@@ -65,6 +67,16 @@ class App
 
 	private initWebGL( canvas: HTMLCanvasElement )
 	{
+		canvas.addEventListener( 'mousemove', ( event ) =>
+		{
+			const target_rect = (<HTMLElement>event.currentTarget).getBoundingClientRect();
+			this.mx = ( event.clientX - target_rect.left ) / canvas.width;
+			this.my = ( event.clientY - target_rect.top ) / canvas.height;
+			if ( this.mx < 0  ) { this.mx = 0; }
+			if ( 1 < this.mx ) { this.mx = 1; }
+			if ( this.my < 0  ) { this.my = 0; }
+			if ( 1 < this.my ) { this.my = 1; }
+		}, false );
 		this.gl = <WebGLRenderingContext>canvas.getContext( 'webgl' ) || canvas.getContext( 'experimental-webgl' );
 	}
 
@@ -129,6 +141,9 @@ class App
 	{
 		this.log.clear();
 
+		this.mx = 0.5;
+		this.my = 0.5;
+
 		this.screen.width = parseInt( this.option.width.value );
 		this.screen.height = parseInt( this.option.height.value );
 		this.gl.viewport( 0, 0, this.gl.canvas.width, this.gl.canvas.height );
@@ -157,6 +172,7 @@ class App
 
 		this.uniLocation = [];
 		this.uniLocation.push( <WebGLUniformLocation>this.gl.getUniformLocation( program, 'frame' ) );
+		this.uniLocation.push( <WebGLUniformLocation>this.gl.getUniformLocation( program, 'mouse') );
 
 		this.gl.enable( this.gl.DEPTH_TEST );
 		this.gl.depthFunc( this.gl.LEQUAL );
@@ -193,6 +209,7 @@ class App
 	{
 
 		this.gl.uniform1f( this.uniLocation[ 0 ], frame );
+		this.gl.uniform2fv( this.uniLocation[ 1 ], [ this.mx, this.my ] );
 
 		this.gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
 		this.gl.clearDepth( 1.0 );
