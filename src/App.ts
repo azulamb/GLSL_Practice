@@ -4,6 +4,7 @@ interface OPTION
 {
 	width: HTMLInputElement;
 	height: HTMLInputElement;
+	clear: iOSToggle;
 }
 
 class App
@@ -211,9 +212,12 @@ class App
 		this.gl.uniform1f( this.uniLocation[ 0 ], frame );
 		this.gl.uniform2fv( this.uniLocation[ 1 ], [ this.mx, this.my ] );
 
-		this.gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
-		this.gl.clearDepth( 1.0 );
-		this.gl.clear( this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT );
+		if ( this.option.clear.checked )
+		{
+			this.gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+			this.gl.clearDepth( 1.0 );
+			this.gl.clear( this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT );
+		}
 
 		this.gl.drawElements( this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0 );
 

@@ -1,11 +1,13 @@
 /// <reference path="./App.ts" />
 /// <reference path="./CodeEditor.ts" />
 /// <reference path="./LogArea.ts" />
+/// <reference path="./iOSToggle.ts" />
 
 function Init()
 {
 	CodeEditor.init();
 	LogArea.init();
+	iOSToggle.init();
 
 	let frame = 0;
 	const render = () =>
@@ -33,6 +35,7 @@ function Init()
 		{
 			width: <HTMLInputElement>document.getElementById( 'width' ),
 			height: <HTMLInputElement>document.getElementById( 'height' ),
+			clear: <iOSToggle>document.getElementById( 'clear' ),
 		},
 	} );
 

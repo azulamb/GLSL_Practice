@@ -36,7 +36,7 @@ class LogArea extends HTMLElement
 	public get max() { return parseInt( this.getAttribute( 'max' ) || '10' ); }
 	public set max( value )
 	{
-		if ( !value ) { this.setAttribute( 'max', '' ); return; }
+		if ( !value ) { this.removeAttribute( 'max' ); return; }
 		if ( Number.isNaN( value ) || value <= 0 ) { return; }
 		this.setAttribute( 'max', value + '' );
 	}

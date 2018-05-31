@@ -20,14 +20,12 @@ class CodeEditor extends HTMLElement
 		this.textarea = document.createElement( 'textarea' );
 		this.textarea.addEventListener( 'keydown', ( event ) =>
 		{
-			if ( event.keyCode === 9 )
-			{
-				event.preventDefault();
-				const val = this.textarea.value;
-				const pos = this.textarea.selectionStart;
-				this.textarea.value = val.substr( 0, pos ) + '\t' + val.substr( pos, val.length );
-				this.textarea.setSelectionRange( pos + 1, pos + 1 );
-			}
+			if ( event.keyCode !== 9 ) { return; }
+			event.preventDefault();
+			const value = this.textarea.value;
+			const pos = this.textarea.selectionStart;
+			this.textarea.value = value.substr( 0, pos ) + '\t' + value.substr( pos, value.length );
+			this.textarea.setSelectionRange( pos + 1, pos + 1 );
 		}, false );
 		//contentEditable
 

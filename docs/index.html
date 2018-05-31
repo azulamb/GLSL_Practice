@@ -22,15 +22,18 @@ button:before{display:inline-block;}
 #option{position:absolute;top:0;right:0;}
 #option:before{content:'▼';}
 .option{display:block;height:0;width:100%;transition:height 0.5s;overflow:hidden;}
+.open .option{height:100%;}
 .option > div{overflow:auto;width:100%;height:100%;padding:0.5rem;}
 h3{margin:0.5rem 0;padding-left:0.3rem;border-left:0.5rem solid var(--front-color);border-bottom:2px solid var(--front-color);}
+.rebuild:after{content:'*1';display:inline-block;color:red;}
 input[type="number"]{width:3rem;}
-.open .option{height:100%;}
+ios-toggle{display:inline-block;}
+hr{border: 1px solid var(--front-color);}
 .running #run:before{content:'■';}
 .open #option:before{content:'▲';}
 </style>
 <script type="text/javascript">
-const LIST = [ 'default' ];
+const LIST = [ 'default', 'checker' ];
 </script>
 </head>
 <body>
@@ -42,8 +45,14 @@ const LIST = [ 'default' ];
 	<div class="menu"><select id="preset"></select><button id="run"></button><button id="option"></button></div>
 	<div class="option">
 		<div>
-			<h3>Screen size</h3>
+			<h3 class="rebuild">Screen size</h3>
 			<div><input type="number" id="width" min="1" value="512"> x <input type="number" id="height" min="1" value="512"></div>
+			<h3>Clear screen</h3>
+			<ios-toggle id="clear" checked="checked"></ios-toggle>
+			<hr />
+			<ul>
+				<li><span class="rebuild"></span> Need rebuild.</li>
+			</ul>
 		</div>
 	</div>
 	<code-editor id="vs"></code-editor>
@@ -60,6 +69,21 @@ uniform vec2  mouse;
 
 void main(void) {
 	gl_FragColor = vec4( mouse.x, mouse.y, sin( frame * 0.01 ), 0.5 );
+}</script>
+<script id="checker_vs" type="x-shader/x-vertex">attribute vec3 position;
+
+void main(void) {
+	gl_Position = vec4(position, 1.0);
+}</script>
+<script id="checker_fs" type="x-shader/x-fragment">precision mediump float;
+uniform float frame;
+uniform vec2  mouse;
+
+void main(void) {
+	int x = int( gl_FragCoord.x + frame ) / 10;
+	int y = int( gl_FragCoord.y + frame ) / 10;
+	float c = mod( float( x + y ), 2.0 );
+	gl_FragColor = vec4( c, c, c, 1.0 );
 }</script>
 </body>
 </html>

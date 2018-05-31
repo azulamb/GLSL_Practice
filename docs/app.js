@@ -130,9 +130,11 @@ class App {
     draw(frame) {
         this.gl.uniform1f(this.uniLocation[0], frame);
         this.gl.uniform2fv(this.uniLocation[1], [this.mx, this.my]);
-        this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        this.gl.clearDepth(1.0);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+        if (this.option.clear.checked) {
+            this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            this.gl.clearDepth(1.0);
+            this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+        }
         this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
         this.gl.flush();
     }
@@ -148,13 +150,14 @@ class CodeEditor extends HTMLElement {
         style.textContent = 'textarea{display:block;width:100%;height:100%;box-sizing:border-box;}';
         this.textarea = document.createElement('textarea');
         this.textarea.addEventListener('keydown', (event) => {
-            if (event.keyCode === 9) {
-                event.preventDefault();
-                const val = this.textarea.value;
-                const pos = this.textarea.selectionStart;
-                this.textarea.value = val.substr(0, pos) + '\t' + val.substr(pos, val.length);
-                this.textarea.setSelectionRange(pos + 1, pos + 1);
+            if (event.keyCode !== 9) {
+                return;
             }
+            event.preventDefault();
+            const value = this.textarea.value;
+            const pos = this.textarea.selectionStart;
+            this.textarea.value = value.substr(0, pos) + '\t' + value.substr(pos, value.length);
+            this.textarea.setSelectionRange(pos + 1, pos + 1);
         }, false);
         this.contents.appendChild(style);
         this.contents.appendChild(this.textarea);
@@ -188,7 +191,7 @@ class LogArea extends HTMLElement {
     get max() { return parseInt(this.getAttribute('max') || '10'); }
     set max(value) {
         if (!value) {
-            this.setAttribute('max', '');
+            this.removeAttribute('max');
             return;
         }
         if (Number.isNaN(value) || value <= 0) {
@@ -210,9 +213,62 @@ class LogArea extends HTMLElement {
         this.textarea.value = newlogs.join('\n');
     }
 }
+class iOSToggle extends HTMLElement {
+    static init(tagname = 'ios-toggle') {
+        customElements.define(tagname, iOSToggle);
+    }
+    constructor() {
+        super();
+        this.contents = this.attachShadow({ mode: 'open' });
+        const style = document.createElement('style');
+        style.textContent = `#toggle {--height:var(--toggle-height,1.2em);--width:var(--toggle-width,calc(var(--height)*1.8));--back:var(--toggle-back,lightgray);--front:var(--toggle-front,white);--on:var(--toggle-on-color,springgreen);--bscale:var(--toggle-button-scale,0.8);--cursor:var(--toggle-cursor,pointer);--time:var(--toggle-time,0.1s);--anime:var(--toggle-timing-function,ease);--size:calc(var(--height)*var(--bscale));width:var(--width);height:var(--height);position:relative;border-radius:calc(var(--height)/2);overflow:hidden;background-color:var(--back);box-sizing:border-box;padding:calc((1 - var(--bscale))/2*var(--height))calc(var(--height)/2);cursor:var(--cursor);}
+#toggle:before,#toggle:after{content:"";display:block;background-color:var(--on);border-radius:50%;width:var(--size);height:var(--size);position:absolute;top:0;bottom:0;left:calc((1 - var(--bscale))/2*var(--height));margin:auto;}
+#toggle:after {background-color:var(--front);transition: left var( --anime ) var(--time);}
+#toggle[checked="checked"]:after{left:calc(var(--width) - var(--height)*(1 + var(--bscale))/2);}
+#toggle[checked="checked"] > div{width:100%;}
+#toggle > div{height:var(--size);width:0;background-color:var(--on);transition:width var(--anime) var(--time);}`;
+        const toggle = document.createElement('div');
+        toggle.id = 'toggle';
+        toggle.appendChild(document.createElement('div'));
+        this.contents.appendChild(style);
+        this.contents.appendChild(toggle);
+        if (this.hasAttribute('checked')) {
+            toggle.setAttribute('checked', this.getAttribute('checked') || 'checked');
+        }
+        else {
+            toggle.removeAttribute('checked');
+        }
+        toggle.addEventListener('click', (event) => {
+            if (this.hasAttribute('checked')) {
+                this.removeAttribute('checked');
+            }
+            else {
+                this.setAttribute('checked', 'checked');
+            }
+        }, false);
+    }
+    static get observedAttributes() { return ['checked']; }
+    get checked() { return this.hasAttribute('checked'); }
+    set checked(value) { this.setAttribute('checked', value === true ? 'checked' : ''); }
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (name === 'checked') {
+            this.toggle(newValue === 'checked');
+        }
+    }
+    toggle(setValue) {
+        const toggle = this.contents.getElementById('toggle');
+        if (!toggle.hasAttribute('checked') || setValue === true) {
+            toggle.setAttribute('checked', 'checked');
+            return true;
+        }
+        toggle.removeAttribute('checked');
+        return false;
+    }
+}
 function Init() {
     CodeEditor.init();
     LogArea.init();
+    iOSToggle.init();
     let frame = 0;
     const render = () => {
         if (!document.body.classList.contains('running')) {
@@ -235,6 +291,7 @@ function Init() {
         option: {
             width: document.getElementById('width'),
             height: document.getElementById('height'),
+            clear: document.getElementById('clear'),
         },
     });
     document.getElementById('run').addEventListener('click', () => {
