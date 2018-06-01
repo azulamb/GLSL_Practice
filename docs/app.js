@@ -21,9 +21,7 @@ class App {
         });
         select.addEventListener('change', () => {
             const shader = select.selectedOptions[0].value || '';
-            const vsc = this.getShader(shader + '_vs');
             const fsc = this.getShader(shader + '_fs');
-            this.vs.value = vsc;
             this.fs.value = fsc;
         }, false);
     }
@@ -46,6 +44,19 @@ class App {
             }
         }, false);
         this.gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        const ext = this.gl.getExtension('OES_texture_float');
+        if (ext === null) {
+            this.log.add('float texture not supported');
+        }
+        const vs = this.createVertexShader(document.getElementById('tvs').text);
+        const fs = this.createFragmentShader(document.getElementById('tfs').text);
+        this._program = this.createProgram(vs, fs);
+        const uv = this.gl.getAttribLocation(this._program, 'textureCoord');
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.createVbo(new Float32Array([0, 0, 1, 0, 0, 1, 1, 1])));
+        this.gl.enableVertexAttribArray(uv);
+        this.gl.vertexAttribPointer(uv, 2, this.gl.FLOAT, false, 0, 0);
+        const tex = this.gl.getUniformLocation(this._program, 'backbuffer');
+        this.gl.uniform1i(tex, 0);
     }
     getShader(name) {
         const script = document.getElementById(name);
@@ -94,24 +105,38 @@ class App {
         this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
         const vs = this.createVertexShader(this.vs.value);
         const fs = this.createFragmentShader(this.fs.value);
-        const program = this.createProgram(vs, fs);
+        this.program = this.createProgram(vs, fs);
         const attLocation = [];
-        attLocation.push(this.gl.getAttribLocation(program, 'position'));
+        attLocation.push(this.gl.getAttribLocation(this.program, 'position'));
         const attStride = [3, 4, 2];
         const vbo = [];
-        vbo.push(this.createVbo(new Float32Array([-1, 1, 0, 1, 1, 0, -1, -1, 0, 1, -1, 0])));
-        const index = [0, 1, 2, 3, 2, 1];
+        vbo.push(this.createVbo(new Float32Array([-1, -1, 0, 1, -1, 0, -1, 1, 0, 1, 1, 0])));
+        const index = [2, 3, 0, 3, 0, 1];
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vbo[0]);
         this.gl.enableVertexAttribArray(attLocation[0]);
         this.gl.vertexAttribPointer(attLocation[0], attStride[0], this.gl.FLOAT, false, 0, 0);
+        const tex = this.gl.getUniformLocation(this.program, 'backbuffer');
+        this.gl.uniform1i(tex, 0);
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.createIbo(new Int16Array(index)));
         this.uniLocation = [];
-        this.uniLocation.push(this.gl.getUniformLocation(program, 'frame'));
-        this.uniLocation.push(this.gl.getUniformLocation(program, 'mouse'));
+        this.uniLocation.push(this.gl.getUniformLocation(this.program, 'frame'));
+        this.uniLocation.push(this.gl.getUniformLocation(this.program, 'mouse'));
+        this.uniLocation.push(this.gl.getUniformLocation(this.program, 'resolution'));
+        this.back = this.createFrameBuffer(this.screen.width, this.screen.height, this.gl.FLOAT);
+        this.front = this.createFrameBuffer(this.screen.width, this.screen.height, this.gl.FLOAT);
         this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.depthFunc(this.gl.LEQUAL);
         this.gl.enable(this.gl.BLEND);
         this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.back.f);
+        this.gl.clearColor(0, 0, 0, 0);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+        this.gl.useProgram(this.program);
+        this.gl.uniform1f(this.uniLocation[0], 0);
+        this.gl.uniform2fv(this.uniLocation[1], [this.mx, this.my]);
+        this.gl.uniform2fv(this.uniLocation[2], [this.screen.width, this.screen.height]);
+        this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
+        this.gl.flush();
     }
     createVbo(data, dynamic = false) {
         const vbo = this.gl.createBuffer();
@@ -127,16 +152,56 @@ class App {
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, null);
         return ibo;
     }
+    createFrameBuffer(width, height, format) {
+        const textureFormat = format || this.gl.UNSIGNED_BYTE;
+        const frameBuffer = this.gl.createFramebuffer();
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, frameBuffer);
+        const depthRenderBuffer = this.gl.createRenderbuffer();
+        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, depthRenderBuffer);
+        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, width, height);
+        this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, depthRenderBuffer);
+        const fTexture = this.gl.createTexture();
+        this.gl.bindTexture(this.gl.TEXTURE_2D, fTexture);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, textureFormat, null);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, fTexture, 0);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+        return { f: frameBuffer, d: depthRenderBuffer, t: fTexture };
+    }
     draw(frame) {
+        this.gl.useProgram(this.program);
+        this.gl.enable(this.gl.BLEND);
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.front.f);
         this.gl.uniform1f(this.uniLocation[0], frame);
         this.gl.uniform2fv(this.uniLocation[1], [this.mx, this.my]);
+        this.gl.uniform2fv(this.uniLocation[2], [this.screen.width, this.screen.height]);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.back.t);
         if (this.option.clear.checked) {
             this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
             this.gl.clearDepth(1.0);
             this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
         }
         this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
+        this.renderFront();
         this.gl.flush();
+        const tmp = this.back;
+        this.back = this.front;
+        this.front = tmp;
+    }
+    renderFront() {
+        this.gl.useProgram(this._program);
+        this.gl.disable(this.gl.BLEND);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.front.t);
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+        this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        this.gl.clearDepth(1.0);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+        this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
     }
 }
 class CodeEditor extends HTMLElement {
@@ -159,6 +224,7 @@ class CodeEditor extends HTMLElement {
             this.textarea.value = value.substr(0, pos) + '\t' + value.substr(pos, value.length);
             this.textarea.setSelectionRange(pos + 1, pos + 1);
         }, false);
+        this.textarea.value = this.textContent || '';
         this.contents.appendChild(style);
         this.contents.appendChild(this.textarea);
     }

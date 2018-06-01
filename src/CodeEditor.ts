@@ -27,6 +27,7 @@ class CodeEditor extends HTMLElement
 			this.textarea.value = value.substr( 0, pos ) + '\t' + value.substr( pos, value.length );
 			this.textarea.setSelectionRange( pos + 1, pos + 1 );
 		}, false );
+		this.textarea.value = this.textContent || '';
 		//contentEditable
 
 		this.contents.appendChild( style );

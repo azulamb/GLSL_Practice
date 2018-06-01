@@ -16,6 +16,7 @@ section.right{right:0;padding-top:2rem;}
 canvas{position:absolute;top:0;bottom:0;left:0;right:0;margin:auto;}
 #log{display:block;position:absolute;width:100%;height:var(--log-height);left:0;bottom:0;}
 code-editor{display:block;width:100%;height:50%;margin:0;}
+code-editor#fs{height:100%;}
 button{height:2rem;display:inline-block;width:2rem;height:2rem;}
 button:before{display:inline-block;}
 #run:before{content:'▶';}
@@ -49,19 +50,34 @@ const LIST = [ 'default', 'checker' ];
 			<div><input type="number" id="width" min="1" value="512"> x <input type="number" id="height" min="1" value="512"></div>
 			<h3>Clear screen</h3>
 			<ios-toggle id="clear" checked="checked"></ios-toggle>
+			<h3 class="rebuild">Vertex Shader</h3>
+			<code-editor id="vs">attribute vec3 position;
+
+void main(void) {
+	gl_Position = vec4(position, 1.0);
+}</code-editor>
 			<hr />
 			<ul>
 				<li><span class="rebuild"></span> Need rebuild.</li>
 			</ul>
 		</div>
 	</div>
-	<code-editor id="vs"></code-editor>
 	<code-editor id="fs"></code-editor>
 </section>
-<script id="default_vs" type="x-shader/x-vertex">attribute vec3 position;
+<script id="tvs" type="x-shader/x-vertex">attribute vec3 position;
+attribute vec2 textureCoord;
+varying vec2 vTextureCoord;
 
-void main(void) {
-	gl_Position = vec4(position, 1.0);
+void main( void ) {
+	vTextureCoord = textureCoord;
+	gl_Position = vec4( position, 1.0 );
+}</script>
+<script id="tfs" type="x-shader/x-fragment">precision mediump float;
+uniform sampler2D backbuffer;
+varying vec2 vTextureCoord;
+
+void main( void ) {
+	gl_FragColor = texture2D( backbuffer, vTextureCoord );
 }</script>
 <script id="default_fs" type="x-shader/x-fragment">precision mediump float;
 uniform float frame;
@@ -70,14 +86,11 @@ uniform vec2  mouse;
 void main(void) {
 	gl_FragColor = vec4( mouse.x, mouse.y, sin( frame * 0.01 ), 0.5 );
 }</script>
-<script id="checker_vs" type="x-shader/x-vertex">attribute vec3 position;
-
-void main(void) {
-	gl_Position = vec4(position, 1.0);
-}</script>
 <script id="checker_fs" type="x-shader/x-fragment">precision mediump float;
 uniform float frame;
-uniform vec2  mouse;
+uniform vec2 mouse;
+uniform vec2 resolution;
+uniform sampler2D backbuffer;
 
 void main(void) {
 	int x = int( gl_FragCoord.x + frame ) / 10;
