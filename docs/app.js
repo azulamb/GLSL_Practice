@@ -6,6 +6,8 @@ class App {
         this.vs = config.vs;
         this.fs = config.fs;
         this.initSelect(config.preset);
+        this.initScale(config.option.scale);
+        this.initAntialias(config.option.antialias);
         this.initWebGL(config.screen);
     }
     initSelect(select) {
@@ -14,16 +16,49 @@ class App {
         option.textContent = '-';
         select.appendChild(option);
         LIST.forEach((shader) => {
+            const info = typeof shader === 'string' ? { name: shader } : shader;
             const option = document.createElement('option');
-            option.value = shader;
-            option.textContent = shader;
+            option.value = info.name;
+            option.textContent = info.name;
+            if (info.width && 0 < info.width && info.height && 0 < info.height) {
+                option.dataset.width = info.width + '';
+                option.dataset.height = info.height + '';
+            }
+            if (info.scale && 0 < info.scale) {
+                option.dataset.scale = info.scale + '';
+            }
             select.appendChild(option);
         });
         select.addEventListener('change', () => {
-            const shader = select.selectedOptions[0].value || '';
+            const element = select.selectedOptions[0];
+            const shader = element.value || '';
+            if (element.dataset.width && element.dataset.height) {
+                this.option.width.value = element.dataset.width;
+                this.option.height.value = element.dataset.height;
+            }
+            if (element.dataset.scale) {
+                this.option.scale.value = element.dataset.scale;
+                this.updateScale();
+            }
             const fsc = this.getShader(shader + '_fs');
             this.fs.value = fsc;
         }, false);
+    }
+    initScale(scale) {
+        scale.addEventListener('change', () => { this.updateScale(); }, false);
+    }
+    initAntialias(antialias) {
+        antialias.addEventListener('change', () => {
+            const prev = this.screen.style.imageRendering;
+            this.screen.style.imageRendering = antialias.checked ? 'auto' : 'crisp-edges';
+            if (this.screen.style.imageRendering !== prev) {
+                return;
+            }
+            this.screen.style.imageRendering = antialias.checked ? 'auto' : 'pixelated';
+        }, false);
+    }
+    getWebGLContext(antialias) {
+        return this.screen.getContext('webgl', { antialias: antialias }) || this.screen.getContext('experimental-webgl', { antialias: antialias });
     }
     initWebGL(canvas) {
         canvas.addEventListener('mousemove', (event) => {
@@ -43,7 +78,7 @@ class App {
                 this.my = 1;
             }
         }, false);
-        this.gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        this.gl = this.getWebGLContext(false);
         const ext = this.gl.getExtension('OES_texture_float');
         if (ext === null) {
             this.log.add('float texture not supported');
@@ -57,6 +92,13 @@ class App {
         this.gl.vertexAttribPointer(uv, 2, this.gl.FLOAT, false, 0, 0);
         const tex = this.gl.getUniformLocation(this._program, 'backbuffer');
         this.gl.uniform1i(tex, 0);
+    }
+    updateScale() {
+        const scale = parseFloat(this.option.scale.value) || 1.0;
+        const width = this.screen.width * scale;
+        const height = this.screen.height * scale;
+        this.screen.style.width = width + 'px';
+        this.screen.style.height = height + 'px';
     }
     getShader(name) {
         const script = document.getElementById(name);
@@ -103,12 +145,13 @@ class App {
         this.screen.width = parseInt(this.option.width.value);
         this.screen.height = parseInt(this.option.height.value);
         this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
+        this.updateScale();
         const vs = this.createVertexShader(this.vs.value);
         const fs = this.createFragmentShader(this.fs.value);
         this.program = this.createProgram(vs, fs);
         const attLocation = [];
         attLocation.push(this.gl.getAttribLocation(this.program, 'position'));
-        const attStride = [3, 4, 2];
+        const attStride = [3];
         const vbo = [];
         vbo.push(this.createVbo(new Float32Array([-1, -1, 0, 1, -1, 0, -1, 1, 0, 1, 1, 0])));
         const index = [2, 3, 0, 3, 0, 1];
@@ -212,7 +255,7 @@ class CodeEditor extends HTMLElement {
         super();
         this.contents = this.attachShadow({ mode: 'open' });
         const style = document.createElement('style');
-        style.textContent = 'textarea{display:block;width:100%;height:100%;box-sizing:border-box;}';
+        style.textContent = 'textarea{display:block;width:100%;height:100%;box-sizing:border-box;font-size:var(--font-size,1rem);}';
         this.textarea = document.createElement('textarea');
         this.textarea.addEventListener('keydown', (event) => {
             if (event.keyCode !== 9) {
@@ -225,6 +268,8 @@ class CodeEditor extends HTMLElement {
             this.textarea.setSelectionRange(pos + 1, pos + 1);
         }, false);
         this.textarea.value = this.textContent || '';
+        this.textarea.spellcheck = false;
+        this.textarea.wrap = 'off';
         this.contents.appendChild(style);
         this.contents.appendChild(this.textarea);
     }
@@ -325,10 +370,16 @@ class iOSToggle extends HTMLElement {
         const toggle = this.contents.getElementById('toggle');
         if (!toggle.hasAttribute('checked') || setValue === true) {
             toggle.setAttribute('checked', 'checked');
+            this.toggleEvent();
             return true;
         }
         toggle.removeAttribute('checked');
+        this.toggleEvent();
         return false;
+    }
+    toggleEvent() {
+        const event = new Event('change');
+        this.dispatchEvent(event);
     }
 }
 function Init() {
@@ -357,6 +408,8 @@ function Init() {
         option: {
             width: document.getElementById('width'),
             height: document.getElementById('height'),
+            scale: document.getElementById('scale'),
+            antialias: document.getElementById('antialias'),
             clear: document.getElementById('clear'),
         },
     });

@@ -1,9 +1,12 @@
-declare const LIST: string[];
+interface SHADER_INFO{ name: string, width?: number, height?: number, scale?: number }
+declare const LIST: (string|SHADER_INFO)[];
 
 interface OPTION
 {
 	width: HTMLInputElement;
 	height: HTMLInputElement;
+	scale: HTMLInputElement;
+	antialias: iOSToggle;
 	clear: iOSToggle;
 }
 
@@ -48,6 +51,8 @@ class App
 		this.vs = config.vs;
 		this.fs = config.fs;
 		this.initSelect( config.preset );
+		this.initScale( config.option.scale );
+		this.initAntialias( config.option.antialias );
 		this.initWebGL( config.screen );
 	}
 
@@ -60,15 +65,37 @@ class App
 
 		LIST.forEach( ( shader ) =>
 		{
+			const info: SHADER_INFO = typeof shader === 'string' ? { name: shader } : shader;
 			const option = document.createElement( 'option' );
-			option.value = shader;
-			option.textContent = shader;
+			option.value = info.name;
+			option.textContent = info.name;
+
+			if ( info.width && 0 < info.width && info.height && 0 < info.height )
+			{
+				option.dataset.width = info.width + '';
+				option.dataset.height = info.height + '';
+			}
+
+			if ( info.scale && 0 < info.scale ) { option.dataset.scale = info.scale + ''; }
+
 			select.appendChild( option );
 		} );
 
 		select.addEventListener( 'change', () =>
 		{
-			const shader = select.selectedOptions[ 0 ].value || '';
+			const element = select.selectedOptions[ 0 ];
+			const shader = element.value || '';
+
+			if ( element.dataset.width && element.dataset.height )
+			{
+				this.option.width.value = element.dataset.width;
+				this.option.height.value = element.dataset.height;
+			}
+			if ( element.dataset.scale )
+			{
+				this.option.scale.value = element.dataset.scale;
+				this.updateScale();
+			}
 
 			//const vsc = this.getShader( shader + '_vs' );
 			const fsc = this.getShader( shader + '_fs' );
@@ -76,6 +103,27 @@ class App
 			//this.vs.value = vsc;
 			this.fs.value = fsc;
 		}, false );
+	}
+
+	private initScale( scale: HTMLInputElement )
+	{
+		scale.addEventListener( 'change', () => { this.updateScale(); }, false );
+	}
+
+	private initAntialias( antialias: iOSToggle )
+	{
+		antialias.addEventListener( 'change', () =>
+		{
+			const prev = (<any>this.screen.style).imageRendering;
+			(<any>this.screen.style).imageRendering = antialias.checked ? 'auto' : 'crisp-edges';
+			if ( (<any>this.screen.style).imageRendering !== prev ) { return; }
+			(<any>this.screen.style).imageRendering = antialias.checked ? 'auto' : 'pixelated';
+		}, false );
+	}
+
+	private getWebGLContext( antialias: boolean )
+	{
+		return <WebGLRenderingContext>this.screen.getContext( 'webgl', { antialias: antialias } ) || this.screen.getContext( 'experimental-webgl', { antialias: antialias } );
 	}
 
 	private initWebGL( canvas: HTMLCanvasElement )
@@ -90,7 +138,8 @@ class App
 			if ( this.my < 0  ) { this.my = 0; }
 			if ( 1 < this.my ) { this.my = 1; }
 		}, false );
-		this.gl = <WebGLRenderingContext>canvas.getContext( 'webgl' ) || canvas.getContext( 'experimental-webgl' );
+		this.gl = this.getWebGLContext( false );
+		// Memo: this.gl.getContextAttributes().antialias
 
 		const ext = this.gl.getExtension( 'OES_texture_float' );
 		if ( ext === null ) { this.log.add( 'float texture not supported' ); }
@@ -104,6 +153,15 @@ class App
 		this.gl.vertexAttribPointer( uv, 2, this.gl.FLOAT, false, 0, 0 );
 		const tex = this.gl.getUniformLocation( this._program, 'backbuffer' );
 		this.gl.uniform1i( tex, 0 );
+	}
+
+	private updateScale()
+	{
+		const scale = parseFloat( this.option.scale.value ) || 1.0;
+		const width = this.screen.width * scale;
+		const height = this.screen.height * scale;
+		this.screen.style.width = width + 'px';
+		this.screen.style.height = height + 'px';
 	}
 
 	private getShader( name: string )
@@ -173,6 +231,7 @@ class App
 		this.screen.width = parseInt( this.option.width.value );
 		this.screen.height = parseInt( this.option.height.value );
 		this.gl.viewport( 0, 0, this.gl.canvas.width, this.gl.canvas.height );
+		this.updateScale();
 
 		const vs = this.createVertexShader( this.vs.value );
 		const fs = this.createFragmentShader( this.fs.value );
@@ -181,7 +240,7 @@ class App
 		const attLocation: number[] = [];
 		attLocation.push( this.gl.getAttribLocation( this.program, 'position' ) );
 
-		const attStride = [ 3, 4, 2 ]; // pos, col, uv
+		const attStride = [ 3 ]; // pos
 
 		const vbo: WebGLBuffer[] = [];
 		vbo.push( this.createVbo( new Float32Array( [ -1, -1, 0, 1, -1, 0, -1, 1, 0, 1, 1, 0 ] ) ) );
@@ -215,7 +274,7 @@ class App
 		// Init backbuffer.
 		this.gl.bindFramebuffer( this.gl.FRAMEBUFFER, this.back.f );
 		this.gl.clearColor( 0, 0, 0, 0 );
-		this.gl.clear( this.gl.COLOR_BUFFER_BIT);
+		this.gl.clear( this.gl.COLOR_BUFFER_BIT );
 		this.gl.useProgram( this.program );
 		this.gl.uniform1f( this.uniLocation[ 0 ], 0 );
 		this.gl.uniform2fv( this.uniLocation[ 1 ], [ this.mx, this.my ] );

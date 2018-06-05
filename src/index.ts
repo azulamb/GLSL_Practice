@@ -35,6 +35,8 @@ function Init()
 		{
 			width: <HTMLInputElement>document.getElementById( 'width' ),
 			height: <HTMLInputElement>document.getElementById( 'height' ),
+			scale: <HTMLInputElement>document.getElementById( 'scale' ),
+			antialias: <iOSToggle>document.getElementById( 'antialias' ),
 			clear: <iOSToggle>document.getElementById( 'clear' ),
 		},
 	} );

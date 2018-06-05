@@ -14,7 +14,7 @@ class iOSToggle extends HTMLElement
 		this.contents = this.attachShadow( { mode: 'open' } );
 
 		const style = document.createElement( 'style' );
-		style.textContent = `#toggle {--height:var(--toggle-height,1.2em);--width:var(--toggle-width,calc(var(--height)*1.8));--back:var(--toggle-back,lightgray);--front:var(--toggle-front,white);--on:var(--toggle-on-color,springgreen);--bscale:var(--toggle-button-scale,0.8);--cursor:var(--toggle-cursor,pointer);--time:var(--toggle-time,0.1s);--anime:var(--toggle-timing-function,ease);--size:calc(var(--height)*var(--bscale));width:var(--width);height:var(--height);position:relative;border-radius:calc(var(--height)/2);overflow:hidden;background-color:var(--back);box-sizing:border-box;padding:calc((1 - var(--bscale))/2*var(--height))calc(var(--height)/2);cursor:var(--cursor);}
+		style.textContent = `#toggle{--height:var(--toggle-height,1.2em);--width:var(--toggle-width,calc(var(--height)*1.8));--back:var(--toggle-back,lightgray);--front:var(--toggle-front,white);--on:var(--toggle-on-color,springgreen);--bscale:var(--toggle-button-scale,0.8);--cursor:var(--toggle-cursor,pointer);--time:var(--toggle-time,0.1s);--anime:var(--toggle-timing-function,ease);--size:calc(var(--height)*var(--bscale));width:var(--width);height:var(--height);position:relative;border-radius:calc(var(--height)/2);overflow:hidden;background-color:var(--back);box-sizing:border-box;padding:calc((1 - var(--bscale))/2*var(--height))calc(var(--height)/2);cursor:var(--cursor);}
 #toggle:before,#toggle:after{content:"";display:block;background-color:var(--on);border-radius:50%;width:var(--size);height:var(--size);position:absolute;top:0;bottom:0;left:calc((1 - var(--bscale))/2*var(--height));margin:auto;}
 #toggle:after {background-color:var(--front);transition: left var( --anime ) var(--time);}
 #toggle[checked="checked"]:after{left:calc(var(--width) - var(--height)*(1 + var(--bscale))/2);}
@@ -67,10 +67,18 @@ class iOSToggle extends HTMLElement
 		if ( !toggle.hasAttribute( 'checked' ) || setValue === true )
 		{
 			toggle.setAttribute( 'checked', 'checked' );
+			this.toggleEvent();
 			return true;
 		}
 		toggle.removeAttribute( 'checked' );
+		this.toggleEvent();
 		return false;
+	}
+
+	private toggleEvent()
+	{
+		const event = new Event( 'change' );
+		this.dispatchEvent( event );
 	}
 
 }

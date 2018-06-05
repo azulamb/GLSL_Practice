@@ -15,7 +15,7 @@ class CodeEditor extends HTMLElement
 		this.contents = this.attachShadow( { mode: 'open' } );
 
 		const style = document.createElement( 'style' );
-		style.textContent = 'textarea{display:block;width:100%;height:100%;box-sizing:border-box;}';
+		style.textContent = 'textarea{display:block;width:100%;height:100%;box-sizing:border-box;font-size:var(--font-size,1rem);}';
 
 		this.textarea = document.createElement( 'textarea' );
 		this.textarea.addEventListener( 'keydown', ( event ) =>
@@ -28,6 +28,8 @@ class CodeEditor extends HTMLElement
 			this.textarea.setSelectionRange( pos + 1, pos + 1 );
 		}, false );
 		this.textarea.value = this.textContent || '';
+		this.textarea.spellcheck = false;
+		this.textarea.wrap = 'off';
 		//contentEditable
 
 		this.contents.appendChild( style );
